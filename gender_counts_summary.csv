@@ -1,0 +1,13 @@
+file,Mann,Frau,Genderneutral,O,TOTAL_ROWS,TOTAL_LABELED
+m_wTesttext18HuberLuise.tsv,796,1274,115,43685,45870,2185
+m_wTesttext19AndreasSalomeHaus.tsv,738,801,52,39445,41036,1591
+m_wTesttext20ReventlowSelbstmordverein.tsv,1238,651,57,48131,50077,1946
+m_wTrainingskorpus370000_mitDrama_mitBrief18-20.tsv,10849,5224,615,353711,370399,16688
+m_w_Testtext18SchillerGeisterseher.tsv,1395,105,91,44324,45915,1591
+m_w_Testtext19SpielhagenZeitvertreib.tsv,1703,973,116,64774,67566,2792
+m_w_Testtext20Tucholsky_Gripsholm.tsv,559,932,218,46439,48148,1709
+m_w_Testtext_Brief_AlfredMombert.tsv,100,7,6,2884,2997,113
+m_w_Testtext_Brief_Berliner_Intellektuelle.tsv,80,39,4,2981,3104,123
+m_w_Testtext_Brief_IdaDehmel_MarianneGaertner_0.tsv,47,90,2,2861,3000,139
+m_w_Testtext_Brief_IdaDehmel_MarianneGaertner_4.tsv,74,102,7,2817,3000,183
+m_w_Testtext_Brief_StefanZweig.tsv,137,2,0,2854,2993,139
