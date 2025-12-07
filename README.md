@@ -3,7 +3,7 @@
 - Corpus analysis of gender assignments in German texts (18th–20th c.) from https://msternchenw.de/. 
 - Scans all `*.tsv` with tokens labeled `Mann`, `Frau`, `Genderneutral`, `O`.
 - Adds POS tagging for labeled tokens using spaCy (`de_core_news_md`, fallback `de_core_news_sm`).
--Start Dashboard with: Start-Process "\Gender-Korpus\dashboard.html"
+- Start Dashboard with: Start-Process "\Gender-Korpus\dashboard.html"
 
 ## Key totals (last run)
 
