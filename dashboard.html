@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gender-Korpus Dashboard</title>
+    <style>
+      :root {
+        --bg: #f4f6f9;
+        --card-bg: #fff;
+        --text: #333;
+        --accent-m: #3b82f6;
+        --accent-f: #ec4899;
+        --accent-n: #10b981;
+        --accent-o: #6b7280;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 1.5rem;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+      header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 0.25rem;
+      }
+      header p {
+        color: #555;
+        font-size: 0.95rem;
+        max-width: 720px;
+        margin: 0 auto;
+      }
+
+      /* Score Cards */
+      .scores {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .score-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        transition: transform 0.15s;
+      }
+      .score-card:hover {
+        transform: translateY(-3px);
+      }
+      .score-card .value {
+        font-size: 1.75rem;
+        font-weight: 700;
+      }
+      .score-card .label {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 0.25rem;
+      }
+      .score-card.mann .value {
+        color: var(--accent-m);
+      }
+      .score-card.frau .value {
+        color: var(--accent-f);
+      }
+      .score-card.neutral .value {
+        color: var(--accent-n);
+      }
+      .score-card.other .value {
+        color: var(--accent-o);
+      }
+
+      /* Graph Grid */
+      .graphs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+      }
+      @media (max-width: 1100px) {
+        .graphs {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 700px) {
+        .graphs {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .graph-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 0.75rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+      }
+      .graph-card h3 {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        text-align: center;
+      }
+      .graph-card .img-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        cursor: zoom-in;
+      }
+      .graph-card img {
+        max-width: 100%;
+        max-height: 260px;
+        object-fit: contain;
+        transition: transform 0.25s;
+      }
+      .graph-card img:hover {
+        transform: scale(1.03);
+      }
+
+      /* Lightbox */
+      #lightbox {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        cursor: zoom-out;
+      }
+      #lightbox img {
+        max-width: 95vw;
+        max-height: 95vh;
+        border-radius: 8px;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 2rem;
+        font-size: 0.8rem;
+        color: #888;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Gender-Korpus Dashboard</h1>
+      <p>
+        Analyse von Geschlechts-Zuschreibungen in deutschsprachigen Texten
+        (18.–20. Jh.). Tokens sind als <strong>Mann</strong>,
+        <strong>Frau</strong>, <strong>Genderneutral</strong> oder
+        <strong>O</strong> (keine Zuschreibung) annotiert.
+      </p>
+    </header>
+
+    <!-- Big Score Numbers -->
+    <section class="scores">
+      <div class="score-card">
+        <div class="value">684.105</div>
+        <div class="label">Tokens gesamt</div>
+      </div>
+      <div class="score-card">
+        <div class="value">29.199</div>
+        <div class="label">Gelabelt (M/F/N)</div>
+      </div>
+      <div class="score-card mann">
+        <div class="value">17.716</div>
+        <div class="label">Mann (60,67 %)</div>
+      </div>
+      <div class="score-card frau">
+        <div class="value">10.200</div>
+        <div class="label">Frau (34,93 %)</div>
+      </div>
+      <div class="score-card neutral">
+        <div class="value">1.283</div>
+        <div class="label">Genderneutral (4,39 %)</div>
+      </div>
+      <div class="score-card other">
+        <div class="value">654.906</div>
+        <div class="label">O (nicht zugeordnet)</div>
+      </div>
+    </section>
+
+    <!-- Graphs 3‑per‑row -->
+    <section class="graphs">
+      <div class="graph-card">
+        <h3>Absolute Verteilung</h3>
+        <div class="img-wrap">
+          <img src="gender_counts_bar.png" alt="Absolute Verteilung" />
+        </div>
+      </div>
+      <div class="graph-card">
+        <h3>Anteil (Donut)</h3>
+        <div class="img-wrap">
+          <img src="gender_counts_donut.png" alt="Donut-Chart" />
+        </div>
+      </div>
+      <div class="graph-card">
+        <h3>Normalisiert pro Text (‰)</h3>
+        <div class="img-wrap">
+          <img
+            src="gender_counts_normalized_per_text.png"
+            alt="Normalisiert pro Text"
+          />
+        </div>
+      </div>
+      <div class="graph-card">
+        <h3>Mann : Frau – Ratio pro Text</h3>
+        <div class="img-wrap">
+          <img src="gender_ratio_per_text.png" alt="Ratio pro Text" />
+        </div>
+      </div>
+      <div class="graph-card">
+        <h3>Divergierende Balken (M ↔ F)</h3>
+        <div class="img-wrap">
+          <img
+            src="gender_diverging_bars_per_text.png"
+            alt="Divergierende Balken"
+          />
+        </div>
+      </div>
+      <div class="graph-card">
+        <h3>POS-Heatmap nach Gender</h3>
+        <div class="img-wrap">
+          <img src="pos_heatmap.png" alt="POS-Heatmap" />
+        </div>
+      </div>
+      <div class="graph-card">
+        <h3>POS Verteilung (Top 10, gestapelt)</h3>
+        <div class="img-wrap">
+          <img src="pos_distribution_stacked100.png" alt="POS Stacked" />
+        </div>
+      </div>
+      <div class="graph-card">
+        <h3>POS Verteilung (Top 10, gruppiert)</h3>
+        <div class="img-wrap">
+          <img src="pos_distribution_grouped_top10.png" alt="POS Grouped" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Lightbox -->
+    <div id="lightbox"><img id="lb-img" src="" alt="Enlarged" /></div>
+
+    <footer>Gender-Korpus &bull; Generated by <code>overview.py</code></footer>
+
+    <script>
+      const lb = document.getElementById("lightbox");
+      const lbImg = document.getElementById("lb-img");
+      document.querySelectorAll(".img-wrap img").forEach((img) => {
+        img.addEventListener("click", () => {
+          lbImg.src = img.src;
+          lb.style.display = "flex";
+        });
+      });
+      lb.addEventListener("click", () => {
+        lb.style.display = "none";
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") lb.style.display = "none";
+      });
+    </script>
+  </body>
+</html>
