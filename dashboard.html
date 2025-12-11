@@ -80,6 +80,37 @@
         color: var(--accent-o);
       }
 
+      /* Kritik Section */
+      .kritik-section {
+        margin-bottom: 1.5rem;
+      }
+      .kritik-card {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      }
+      .kritik-card h3 {
+        margin-bottom: 0.75rem;
+        font-size: 1rem;
+        color: #856404;
+      }
+      .kritik-card ol {
+        margin: 0 0 0.75rem 1.25rem;
+        font-size: 0.9rem;
+        line-height: 1.6;
+      }
+      .kritik-card li {
+        margin-bottom: 0.4rem;
+      }
+      .kritik-fazit {
+        font-weight: 600;
+        color: #856404;
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
       /* Graph Grid */
       .graphs {
         display: grid;
@@ -192,6 +223,35 @@
       </div>
     </section>
 
+    <!-- Kritik Card -->
+    <section class="kritik-section">
+      <div class="kritik-card">
+        <h3>⚠️ Kritik am Datensatz</h3>
+        <ol>
+          <li>
+            <strong>Doppelte Zählung:</strong> Zusammenschriften von "Herr"
+            (=Mann) und Eigennamen wie "Limper" (=Mann) ergeben zwei
+            Auszeichnungen bei ein und derselben Person. Dies betrifft sowohl
+            Männer als auch Frauen.
+          </li>
+          <li>
+            <strong>Keine Pronomen:</strong> Pronomen werden nicht mit
+            aufgegriffen, obwohl sie wichtige Geschlechtsindikatoren sind.
+          </li>
+          <li>
+            <strong>Keine Objektbezeichnungen:</strong> Für Objekte gibt es
+            keine Bezeichnungen. Ein "N" für Neutrum wäre sinnvoll gewesen.
+          </li>
+          <li>
+            <strong>Plural fehlt:</strong> Plurale bei Wörtern wie "Freundinnen"
+            oder "Männern" sind mit "O" annotiert. Generell wurde der Plural
+            ausgelassen, vermutlich weil er ggf. gemischt sein kann.
+          </li>
+        </ol>
+        <p class="kritik-fazit">→ Generell nicht perfekte Annotation</p>
+      </div>
+    </section>
+
     <!-- Graphs 3‑per‑row -->
     <section class="graphs">
       <div class="graph-card">
@@ -216,24 +276,12 @@
         </div>
       </div>
       <div class="graph-card">
-        <h3>Mann : Frau – Ratio pro Text</h3>
-        <div class="img-wrap">
-          <img src="gender_ratio_per_text.png" alt="Ratio pro Text" />
-        </div>
-      </div>
-      <div class="graph-card">
         <h3>Divergierende Balken (M ↔ F)</h3>
         <div class="img-wrap">
           <img
             src="gender_diverging_bars_per_text.png"
             alt="Divergierende Balken"
           />
-        </div>
-      </div>
-      <div class="graph-card">
-        <h3>POS-Heatmap nach Gender</h3>
-        <div class="img-wrap">
-          <img src="pos_heatmap.png" alt="POS-Heatmap" />
         </div>
       </div>
       <div class="graph-card">
@@ -246,6 +294,21 @@
         <h3>POS Verteilung (Top 10, gruppiert)</h3>
         <div class="img-wrap">
           <img src="pos_distribution_grouped_top10.png" alt="POS Grouped" />
+        </div>
+      </div>
+      <div class="graph-card">
+        <h3>Unique Eigennamen (global, alle Kategorien)</h3>
+        <div class="img-wrap">
+          <img src="unique_persons_global.png" alt="Unique Personen Global" />
+        </div>
+      </div>
+      <div class="graph-card">
+        <h3>Unique Eigennamen pro Text (normalisiert)</h3>
+        <div class="img-wrap">
+          <img
+            src="unique_persons_per_text.png"
+            alt="Unique Personen pro Text"
+          />
         </div>
       </div>
     </section>

@@ -104,9 +104,9 @@ def build_pos_counts(base_dir: str) -> Tuple[pd.DataFrame, Dict[str, Dict[str, i
 		print("spaCy not installed; skipping POS tagging. Run 'python -m pip install spacy' and download 'de_core_news_sm'.")
 		return pd.DataFrame(), {}
 
-	# Load German model: prefer medium (md), fallback to small (sm)
+	# Load German model: prefer large (lg), fallback to medium (md), then small (sm)
 	nlp = None
-	for model_name in ("de_core_news_md", "de_core_news_sm"):
+	for model_name in ("de_core_news_lg", "de_core_news_md", "de_core_news_sm"):
 		try:
 			nlp = spacy.load(model_name)
 			print(f"Loaded spaCy model: {model_name}")
@@ -114,7 +114,7 @@ def build_pos_counts(base_dir: str) -> Tuple[pd.DataFrame, Dict[str, Dict[str, i
 		except Exception:
 			continue
 	if nlp is None:
-		print("German spaCy model not available. Install via: python -m spacy download de_core_news_md (or sm)")
+		print("German spaCy model not available. Install via: python -m spacy download de_core_news_lg (or md/sm)")
 		return pd.DataFrame(), {}
 
 	files = find_tsv_files(base_dir)
@@ -202,32 +202,6 @@ def save_outputs(per_file_df: pd.DataFrame, totals: dict, out_dir: str) -> None:
 	plt.savefig(os.path.join(out_dir, "gender_counts_normalized_per_text.png"), dpi=150, bbox_inches="tight")
 	plt.close()
 
-	# Men:Women ratio per file (robust scaling)
-	ratio_df = per_file_df.copy()
-	ratio_df["ratio_m_w"] = ratio_df.apply(lambda r: (r["Mann"] / r["Frau"]) if r["Frau"] > 0 else np.nan, axis=1)
-	vals = ratio_df["ratio_m_w"].astype(float).to_numpy()
-	finite_vals = vals[np.isfinite(vals)]
-	plt.figure(figsize=(12, 5), constrained_layout=True)
-	plt.bar(ratio_df["file"], vals, color="#1f77b4")
-	plt.xticks(rotation=60, ha="right")
-	plt.ylabel("Verhältnis Mann : Frau")
-	plt.title("Mann/Frau Verhältnis pro Text")
-	# Add parity line and grid
-	plt.axhline(1.0, color="#888", linestyle="--", linewidth=1)
-	if finite_vals.size:
-		vmin = max(0.1, np.nanmin(finite_vals) * 0.8)
-		vmax = np.nanmax(finite_vals) * 1.2
-		# Switch to log scale if dynamic range is large or max is high
-		if vmax / max(vmin, 1e-6) > 20 or vmax > 10:
-			plt.yscale("log")
-			plt.ylim(vmin, max(vmax, vmin * 10))
-			plt.grid(True, which="both", axis="y", linestyle=":", linewidth=0.6)
-		else:
-			plt.ylim(0, vmax)
-			plt.grid(True, axis="y", linestyle=":", linewidth=0.6)
-	plt.savefig(os.path.join(out_dir, "gender_ratio_per_text.png"), dpi=150, bbox_inches="tight")
-	plt.close()
-
 	# Diverging bar chart: female left, male right per file
 	div_df = per_file_df.copy()
 	# Normalize to per 1000 tokens for fair comparison
@@ -246,6 +220,93 @@ def save_outputs(per_file_df: pd.DataFrame, totals: dict, out_dir: str) -> None:
 	plt.close()
 
 
+def build_unique_persons(base_dir: str) -> Tuple[Dict[str, int], pd.DataFrame]:
+	"""
+	Analyze unique proper nouns (Eigennamen/PROPN) by gender.
+	Reads pos_tagged_tokens.csv and extracts unique tokens with POS=PROPN per gender.
+	Returns global counts and per-file breakdown for all 4 categories.
+	"""
+	pos_path = os.path.join(base_dir, "pos_tagged_tokens.csv")
+	if not os.path.exists(pos_path):
+		return {}, pd.DataFrame()
+	
+	pos_df = pd.read_csv(pos_path, dtype=str)
+	# Filter to PROPN only
+	propn_df = pos_df[pos_df["pos"] == "PROPN"].copy()
+	
+	# Global unique counts for all 4 categories
+	global_counts = {}
+	for cat in ["Mann", "Frau", "Genderneutral", "O"]:
+		global_counts[cat] = propn_df[propn_df["label"] == cat]["token"].nunique()
+	
+	# Per-file unique counts + total tokens for normalization
+	per_file_rows = []
+	for fname in pos_df["file"].unique():
+		file_propn = propn_df[propn_df["file"] == fname]
+		file_total_tokens = len(pos_df[pos_df["file"] == fname])
+		per_file_rows.append({
+			"file": fname,
+			"unique_Mann": file_propn[file_propn["label"] == "Mann"]["token"].nunique(),
+			"unique_Frau": file_propn[file_propn["label"] == "Frau"]["token"].nunique(),
+			"unique_Genderneutral": file_propn[file_propn["label"] == "Genderneutral"]["token"].nunique(),
+			"unique_O": file_propn[file_propn["label"] == "O"]["token"].nunique(),
+			"TOTAL_TOKENS": file_total_tokens,
+		})
+	per_file_unique = pd.DataFrame(per_file_rows).sort_values("file").reset_index(drop=True)
+	
+	return global_counts, per_file_unique
+
+
+def save_unique_person_charts(global_counts: Dict[str, int], per_file_df: pd.DataFrame, out_dir: str) -> None:
+	"""
+	Generate charts for unique person (PROPN) analysis:
+	1. Global bar chart comparing unique names across all 4 categories
+	2. Per-file grouped bar chart (normalized per 1000 tokens)
+	"""
+	if not global_counts or per_file_df.empty:
+		return
+	
+	categories = ["Mann", "Frau", "Genderneutral", "O"]
+	colors = ["#1f77b4", "#d62728", "#2ca02c", "#7f7f7f"]
+	
+	# Chart 1: Global unique persons bar chart (all 4 categories)
+	values = [global_counts.get(c, 0) for c in categories]
+	plt.figure(figsize=(7, 5), constrained_layout=True)
+	bars = plt.bar(categories, values, color=colors)
+	plt.ylabel("Anzahl unique Eigennamen")
+	plt.title("Unique Eigennamen nach Kategorie (PROPN)")
+	for b, v in zip(bars, values):
+		plt.text(b.get_x() + b.get_width() / 2, b.get_height() + 5, f"{v}", ha="center", va="bottom", fontweight="bold")
+	plt.savefig(os.path.join(out_dir, "unique_persons_global.png"), dpi=150, bbox_inches="tight")
+	plt.close()
+	
+	# Chart 2: Per-file grouped bar chart (relative frequency %) - without O for clarity
+	# Compute percentage of tokens that are unique PROPN per category
+	plot_df = per_file_df.copy()
+	per_file_cats = ["Mann", "Frau", "Genderneutral"]  # exclude O for readability
+	per_file_colors = ["#1f77b4", "#d62728", "#2ca02c"]
+	for cat in per_file_cats:
+		col = f"unique_{cat}"
+		plot_df[f"pct_{cat}"] = (plot_df[col] / plot_df["TOTAL_TOKENS"]) * 100
+	
+	plt.figure(figsize=(14, 6), constrained_layout=True)
+	x = np.arange(len(plot_df))
+	width = 0.25
+	offsets = [-1, 0, 1]
+	for i, cat in enumerate(per_file_cats):
+		plt.bar(x + offsets[i] * width, plot_df[f"pct_{cat}"], width=width, label=cat, color=per_file_colors[i])
+	plt.xticks(x, list(plot_df["file"]), rotation=60, ha="right")
+	plt.ylabel("Relative Häufigkeit (%)")
+	plt.title("Unique Eigennamen pro Text (relative Häufigkeit, PROPN)")
+	plt.legend()
+	plt.grid(axis="y", linestyle=":", linewidth=0.5)
+	plt.savefig(os.path.join(out_dir, "unique_persons_per_text.png"), dpi=150, bbox_inches="tight")
+	plt.close()
+	
+	print(f"Saved unique persons charts: unique_persons_global.png, unique_persons_per_text.png")
+	print(f"  Global unique: Mann={global_counts.get('Mann', 0)}, Frau={global_counts.get('Frau', 0)}, Genderneutral={global_counts.get('Genderneutral', 0)}, O={global_counts.get('O', 0)}")
+
+
 def main():
 	base_dir = os.path.dirname(os.path.abspath(__file__))
 	per_file_df, totals = analyze_corpus(base_dir)
@@ -254,7 +315,7 @@ def main():
 	pos_df, pos_agg = build_pos_counts(base_dir)
 	if not pos_df.empty:
 		pos_df.to_csv(os.path.join(base_dir, "pos_tagged_tokens.csv"), index=False, encoding="utf-8")
-		# Heatmap-like CSV: rows=gender, cols=POS
+		# CSV: rows=gender, cols=POS
 		all_pos = sorted({p for d in pos_agg.values() for p in d.keys()})
 		heat_rows = []
 		for gender in ["Frau", "Mann", "Genderneutral", "O"]:
@@ -264,16 +325,6 @@ def main():
 			heat_rows.append(row)
 		heat_df = pd.DataFrame(heat_rows)
 		heat_df.to_csv(os.path.join(base_dir, "pos_counts.csv"), index=False, encoding="utf-8")
-		# Simple heatmap plot
-		plt.figure(figsize=(12, 6), constrained_layout=True)
-		data = heat_df[[p for p in all_pos]].values
-		plt.imshow(data, aspect="auto", cmap="viridis")
-		plt.colorbar(label="Frequenz")
-		plt.yticks(range(len(heat_df)), list(heat_df["gender"]))
-		plt.xticks(range(len(all_pos)), all_pos, rotation=60, ha="right")
-		plt.title("POS Häufigkeiten pro Kategorie")
-		plt.savefig(os.path.join(base_dir, "pos_heatmap.png"), dpi=150, bbox_inches="tight")
-		plt.close()
 
 		# Additional visualization: 100% stacked bar chart for POS distribution (top 10 POS by labeled total)
 		labeled_only = heat_df[heat_df["gender"].isin(["Frau", "Mann", "Genderneutral"])].copy()
@@ -364,7 +415,12 @@ def main():
 	print("Saved bar chart PNG: gender_counts_bar.png")
 	if not pos_df.empty:
 		print("Saved POS CSV: pos_tagged_tokens.csv, pos_counts.csv")
-		print("Saved POS heatmap PNG: pos_heatmap.png")
+		print("Saved POS distribution PNGs: pos_distribution_stacked100.png, pos_distribution_grouped_top10.png")
+
+	# Unique person (PROPN) analysis
+	global_unique, per_file_unique = build_unique_persons(base_dir)
+	if global_unique:
+		save_unique_person_charts(global_unique, per_file_unique, base_dir)
 
 
 if __name__ == "__main__":
